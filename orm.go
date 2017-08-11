@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"reflect"
 )
 
 const (
@@ -183,6 +184,24 @@ func (o *uzOrm) Select(md interface{}) error {
 
 // advanced query
 func (o *uzOrm) QueryTable(md interface{}) QueryPrepareI {
+	val := reflect.ValueOf(md)
+	sInd := reflect.Indirect(val)
+
+	switch val.Kind() {
+	case reflect.Array, reflect.Slice:
+		if sInd.Len() == 0 {
+			panic(fmt.Errorf("[uzOrm.QueryTable] the models which is going to be inserted is empty "))
+		}
+
+		var temp interface{}
+		temp = sInd.Index(0).Addr().Interface()
+		md = temp
+
+	case reflect.Ptr:
+	default:
+		panic(fmt.Errorf("[uzOrm.QueryTable] %s is not support ", sInd.Kind()))
+	}
+
 	q := NewQueryPrepare(md, o.db)
 	return q
 }

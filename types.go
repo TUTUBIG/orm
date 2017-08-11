@@ -11,7 +11,6 @@ const (
 	Gte                 // >=
 	Lt                  // <
 	Lte                 // <=
-	Inn                 // in
 )
 
 type OpType int
@@ -31,25 +30,25 @@ type UzOrmI interface {
 }
 
 type QueryPrepareI interface {
-	QueryEnd()
+	QueryEnd(mds interface{}, sql string, values []interface{}) error
 
-	ExecEnd()
+	ExecEnd(sql string, values ...interface{}) (int64, error)
 
 	Insert(mds ...interface{}) (int64, error)
 
-	Update()
+	Update(cols ...string) (int64, error)
 
-	Delete()
+	Delete() (int64, error)
 
-	Select()
+	Select(mds interface{}) error
 
-	Limit()
+	Limit(limit ...int) QueryPrepareI
 
-	Count()
+	Count() (int64, error)
 
-	OrderBy()
+	OrderBy(col string) QueryPrepareI
 
-	GroupBy()
+	GroupBy(col string) QueryPrepareI
 
 	And(col string, op OpType, value interface{}) QueryPrepareI
 
@@ -67,4 +66,22 @@ func getInd(md interface{}) (ind reflect.Value) {
 		panic(fmt.Errorf("[getInd] only allow ptr model struct, it looks you use two reference to the struct `%s`", typ))
 	}
 	return
+}
+
+func getOpType(op OpType) string {
+	switch op {
+	case Exact:
+		return "= ?"
+	case Gt:
+		return "> ?"
+	case Gte:
+		return ">= ?"
+	case Lt:
+		return "< ?"
+	case Lte:
+		return "<= ?"
+	default:
+		return "="
+	}
+
 }
